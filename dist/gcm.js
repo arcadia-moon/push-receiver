@@ -14,8 +14,26 @@ const REGISTER_URL = 'https://android.clients.google.com/c2dm/register3';
 const CHECKIN_URL = 'https://android.clients.google.com/checkin';
 exports.default = async (config) => {
     const options = await checkIn(config);
-    const credentials = await doRegister(options, config);
-    return credentials;
+    const deleteCredentials = await doRegister(options, config, {
+        delete: "true",
+        scope: "*",
+        'X-scope': "*",
+        gmsv: 115,
+        appId: makeid(11),
+        sender: "*"
+    });
+    if (deleteCredentials.token === "com.chrome.macosx") {
+        const credentials = await doRegister(options, config, {
+            scope: "GCM",
+            "X-scope": "GCM",
+            appId: makeid(11),
+            gmsv: 115
+        });
+        return credentials;
+    }
+    else {
+        throw "DELETE CREDENTIALS ERROR";
+    }
 };
 async function checkIn(config) {
     const body = await (0, request_1.default)({
@@ -41,13 +59,14 @@ async function checkIn(config) {
     };
 }
 exports.checkIn = checkIn;
-async function doRegister({ androidId, securityToken }, config) {
-    const appId = `wp:${config.bundleId}#${(0, crypto_1.randomUUID)()}`;
+async function doRegister({ androidId, securityToken }, config, _body) {
+    const subType = `wp:${config.bundleId}#${(0, crypto_1.randomUUID)()}-V2`;
     const body = (new URLSearchParams({
-        app: 'org.chromium.linux',
-        'X-subtype': appId,
+        app: 'org.chromium.macosx',
+        'X-subtype': subType,
         device: androidId,
         sender: config.vapidKey,
+        ..._body
     })).toString();
     const response = await postRegister({ androidId, securityToken, body, axiosConfig: config.axiosConfig });
     const token = response.split('=')[1];
@@ -55,7 +74,8 @@ async function doRegister({ androidId, securityToken }, config) {
         token,
         androidId,
         securityToken,
-        appId,
+        appId: _body["appId"],
+        subType
     };
 }
 async function postRegister({ androidId, securityToken, body, retry = 0, axiosConfig }) {
@@ -88,8 +108,8 @@ function prepareCheckinBuffer(config) {
         checkin: {
             type: 3,
             chromeBuild: {
-                platform: 2,
-                chromeVersion: '63.0.3234.0',
+                platform: 3,
+                chromeVersion: '115.0.5790.170',
                 channel: 1,
             },
         },
@@ -103,4 +123,15 @@ function prepareCheckinBuffer(config) {
     const message = AndroidCheckinRequest.create(payload);
     return AndroidCheckinRequest.encode(message).finish();
 }
+const makeid = (length) => {
+    let result = '';
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const charactersLength = characters.length;
+    let counter = 0;
+    while (counter < length) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        counter += 1;
+    }
+    return result;
+};
 //# sourceMappingURL=gcm.js.map

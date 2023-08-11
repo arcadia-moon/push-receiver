@@ -15,6 +15,7 @@ export interface GcmData {
     securityToken: string;
     appId?: string;
     token?: string;
+    subType?: any;
 }
 export type FcmData = {
     token: string;

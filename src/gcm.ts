@@ -12,8 +12,26 @@ const CHECKIN_URL = 'https://android.clients.google.com/checkin'
 
 export default async (config: Types.ClientConfig): Promise<Types.GcmData> => {
     const options = await checkIn(config)
-    const credentials = await doRegister(options, config)
-    return credentials
+    const deleteCredentials = await doRegister(options, config, {
+        delete: "true",
+        scope: "*",
+        'X-scope': "*",
+        gmsv: 115,
+        appId: makeid(11),
+        sender: "*"
+    })
+    if(deleteCredentials.token === "com.chrome.macosx") {
+        const credentials = await doRegister(options, config, {
+            scope: "GCM",
+            "X-scope": "GCM",
+            appId: makeid(11),
+            gmsv: 115
+        });
+        return credentials;
+    }
+    else {
+        throw "DELETE CREDENTIALS ERROR"
+    }
 }
 
 export async function checkIn(config: Types.ClientConfig): Promise<Types.GcmData> {
@@ -42,13 +60,14 @@ export async function checkIn(config: Types.ClientConfig): Promise<Types.GcmData
     }
 }
 
-async function doRegister({ androidId, securityToken }: Types.GcmData, config: Types.ClientConfig): Promise<Types.GcmData> {
-    const appId = `wp:${config.bundleId}#${randomUUID()}`
+async function doRegister({ androidId, securityToken }: Types.GcmData, config: Types.ClientConfig, _body: any): Promise<Types.GcmData> {
+    const subType = `wp:${config.bundleId}#${randomUUID()}-V2`
     const body = (new URLSearchParams({
-        app: 'org.chromium.linux',
-        'X-subtype': appId,
+        app: 'org.chromium.macosx',
+        'X-subtype': subType,
         device: androidId,
         sender: config.vapidKey,
+        ..._body
     })).toString()
 
     const response = await postRegister({ androidId, securityToken, body, axiosConfig: config.axiosConfig })
@@ -58,7 +77,8 @@ async function doRegister({ androidId, securityToken }: Types.GcmData, config: T
         token,
         androidId,
         securityToken,
-        appId,
+        appId: _body["appId"],
+        subType
     }
 }
 
@@ -104,8 +124,8 @@ function prepareCheckinBuffer(config: Types.ClientConfig) {
         checkin: {
             type: 3,
             chromeBuild: {
-                platform: 2,
-                chromeVersion: '63.0.3234.0',
+                platform: 3,
+                chromeVersion: '115.0.5790.170',
                 channel: 1,
             },
         },
@@ -119,4 +139,16 @@ function prepareCheckinBuffer(config: Types.ClientConfig) {
 
     const message = AndroidCheckinRequest.create(payload)
     return AndroidCheckinRequest.encode(message).finish()
+}
+
+const makeid = (length) => {
+    let result = '';
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const charactersLength = characters.length;
+    let counter = 0;
+    while (counter < length) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+      counter += 1;
+    }
+    return result;
 }

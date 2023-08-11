@@ -17,7 +17,8 @@ export interface GcmData {
     androidId: string
     securityToken: string
     appId?: string
-    token?: string
+    token?: string,
+    subType?: any
 }
 
 // TODO: replace this with actual data
