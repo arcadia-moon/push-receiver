@@ -62,7 +62,7 @@ exports.checkIn = checkIn;
 async function doRegister({ androidId, securityToken }, config, _body) {
     const subType = `wp:${config.bundleId}#${(0, crypto_1.randomUUID)()}-V2`;
     const body = (new URLSearchParams({
-        app: 'org.chrome.macosx',
+        app: 'com.chrome.macosx',
         'X-subtype': subType,
         device: androidId,
         sender: config.vapidKey,
