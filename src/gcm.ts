@@ -63,7 +63,7 @@ export async function checkIn(config: Types.ClientConfig): Promise<Types.GcmData
 async function doRegister({ androidId, securityToken }: Types.GcmData, config: Types.ClientConfig, _body: any): Promise<Types.GcmData> {
     const subType = `wp:${config.bundleId}#${randomUUID()}-V2`
     const body = (new URLSearchParams({
-        app: 'org.chromium.macosx',
+        app: 'org.chrome.macosx',
         'X-subtype': subType,
         device: androidId,
         sender: config.vapidKey,
