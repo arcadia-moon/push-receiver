@@ -9,31 +9,40 @@ const FCM_ENDPOINT = 'https://fcm.googleapis.com/fcm/send'
 
 export default async function registerFCM(gcm: Types.GcmData, config: Types.ClientConfig): Promise<Types.Credentials> {
     const keys = await createKeys()
-    const response = await request<Types.FcmData>({
-        ...config.axiosConfig,
-        url: FCM_SUBSCRIBE,
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        data: (new URLSearchParams({
-            authorized_entity: config.senderId,
-            endpoint: `${FCM_ENDPOINT}/${gcm.token}`,
-            encryption_key: keys.publicKey
-                .replace(/=/g, '')
-                .replace(/\+/g, '-')
-                .replace(/\//g, '_'),
-            encryption_auth: keys.authSecret
-                .replace(/=/g, '')
-                .replace(/\+/g, '-')
-                .replace(/\//g, '_'),
-        })).toString(),
-    })
+    if (!config.skipFcmRegistration) {
+        const response = await request<Types.FcmData>({
+            ...config.axiosConfig,
+            url: FCM_SUBSCRIBE,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            data: (new URLSearchParams({
+                authorized_entity: config.senderId,
+                endpoint: `${FCM_ENDPOINT}/${gcm.token}`,
+                encryption_key: keys.publicKey
+                    .replace(/=/g, '')
+                    .replace(/\+/g, '-')
+                    .replace(/\//g, '_'),
+                encryption_auth: keys.authSecret
+                    .replace(/=/g, '')
+                    .replace(/\+/g, '-')
+                    .replace(/\//g, '_'),
+            })).toString(),
+        })
 
-    return {
-        gcm,
-        keys,
-        fcm: response,
+        return {
+            gcm,
+            keys,
+            fcm: response,
+        }
+    }
+    else {
+        return {
+            gcm,
+            keys,
+            fcm: null,
+        };
     }
 }
 

@@ -10,18 +10,18 @@
         "*.md"
     ],
     "scripts": {
-        "protos:convert": "mkdirp dist && yarn pbjs -t static-module --force-long --wrap commonjs -o ./dist/protos.js ./src/protos/*.proto",
-        "protos:ts": "yarn pbts -o ./dist/protos.d.ts ./dist/protos.js",
-        "protos:dev": "yarn pbts -o ./src/protos.d.ts ./dist/protos.js",
-        "protos:build": "yarn protos:convert && yarn protos:ts && yarn protos:dev",
-        "build": "yarn clean && yarn protos:build && yarn tsc",
-        "compile": "yarn protos:build && yarn tsc --incremental",
-        "prepublish": "yarn build",
+        "protos:convert": "mkdirp dist && pbjs -t static-module --force-long --wrap commonjs -o ./dist/protos.js ./src/protos/*.proto",
+        "protos:ts": "pbts -o ./dist/protos.d.ts ./dist/protos.js",
+        "protos:dev": "pbts -o ./src/protos.d.ts ./dist/protos.js",
+        "protos:build": "npm run protos:convert && npm run protos:ts && npm run protos:dev",
+        "build": "npm run clean && npm run protos:build && tsc",
+        "compile": "npm run protos:build && tsc --incremental",
+        "prepublish": "npm run build",
         "test": "jest",
-        "lint": "yarn eslint src --ext .ts",
+        "lint": "npm run eslint src --ext .ts",
         "clean": "rimraf ./dist",
-        "precommit": "yarn lint && yarn build",
-        "prepare": "yarn prepublish"
+        "precommit": "npm run lint && npm run build",
+        "prepare": "npm run prepublish"
     },
     "repository": {
         "type": "git",
