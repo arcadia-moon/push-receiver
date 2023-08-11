@@ -29,7 +29,7 @@ export default function decrypt<T = Types.MessageEnvelope>(object: EncryptedMess
     }).filter(x => x);
     const _dh = _keys.find(function (key) {
         return key.indexOf('dh=') === 0;
-    }).substring('dh='.length);
+    });
     const dh = crypto.createECDH('prime256v1')
     dh.setPrivateKey(keys.privateKey, 'base64')
     const salt = _encryption.find(function (key) {
@@ -38,7 +38,7 @@ export default function decrypt<T = Types.MessageEnvelope>(object: EncryptedMess
     const params = {
         version: contentEncoding?.value ?? 'aesgcm',
         authSecret: keys.authSecret,
-        dh: _dh?.substring('dh='.length) ?? cryptoKey[0],
+        dh: _dh?.substring('dh='.length) ?? _keys[0],
         privateKey: dh,
         salt: salt,
     }

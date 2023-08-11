@@ -23,7 +23,7 @@ function decrypt(object, keys) {
     }).filter(x => x);
     const _dh = _keys.find(function (key) {
         return key.indexOf('dh=') === 0;
-    }).substring('dh='.length);
+    });
     const dh = crypto_1.default.createECDH('prime256v1');
     dh.setPrivateKey(keys.privateKey, 'base64');
     const salt = _encryption.find(function (key) {
@@ -32,7 +32,7 @@ function decrypt(object, keys) {
     const params = {
         version: contentEncoding?.value ?? 'aesgcm',
         authSecret: keys.authSecret,
-        dh: _dh?.substring('dh='.length) ?? cryptoKey[0],
+        dh: _dh?.substring('dh='.length) ?? _keys[0],
         privateKey: dh,
         salt: salt,
     };
