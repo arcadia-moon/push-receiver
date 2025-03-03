@@ -1,6 +1,7 @@
+/// <reference types="node" />
 import type * as Types from '../types';
 interface MessageHeader {
-    key: 'crypto-key' | 'encryption';
+    key: 'crypto-key' | 'encryption' | 'content-encoding';
     value: string;
 }
 interface EncryptedMessage {

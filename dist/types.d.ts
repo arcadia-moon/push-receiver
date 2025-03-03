@@ -1,57 +1,26 @@
+import { LogLevels } from "./constants";
+import { AxiosRequestConfig } from 'axios';
 export interface Credentials {
+    keys: Keys;
     gcm: GcmData;
     fcm: FcmData;
-    keys: Keys;
-    config: {
-        projectId: string;
-        vapidKey: string;
-        bundleId: string;
-    };
-}
-export interface InstallationData {
-    token: string;
-    createdAt: number;
-    expiresIn: number;
-    refreshToken: string;
-    fid: string;
 }
 export interface Keys {
     privateKey: string;
     publicKey: string;
     authSecret: string;
 }
-export interface GcmCheckinResponse {
+export interface GcmData {
     androidId: string;
     securityToken: string;
+    appId?: string;
+    token?: string;
+    subType?: any;
 }
-export interface GcmRegisterResponse {
-    appId: string;
+export type FcmData = {
     token: string;
-}
-export type GcmData = GcmCheckinResponse & GcmRegisterResponse;
-export interface FcmRegistrationResponse {
-    name: string;
-    token: string;
-    web: {
-        applicationPubKey: string;
-        auth: string;
-        endpoint: string;
-        p256dh: string;
-    };
-}
-export interface FcmInstallationResponse {
-    authToken: {
-        expiresIn: string;
-        token: string;
-    };
-    fid: string;
-    name: string;
-    refreshToken: string;
-}
-export interface FcmData {
-    token: string;
-    installation: InstallationData;
-}
+    pushSet: string;
+};
 export type PersistentId = string;
 export type DisposeFunction = CallableFunction;
 export interface Notification {
@@ -94,43 +63,18 @@ export interface DataPacket<T = any> {
     tag: number;
     object: T;
 }
-export interface FirebaseConfig {
-    projectId: string;
-    appId: string;
-    apiKey: string;
-    messagingSenderId: string;
-    authDomain?: string;
-    databaseURL?: string;
-    storageBucket?: string;
-    measurementId?: string;
-}
 export interface ClientConfig {
     credentials?: Credentials;
     persistentIds?: PersistentId[];
+    senderId: string;
     bundleId?: string;
     chromeId?: string;
-    /**
-     * 1 = Windows
-     * 2 = Darwin
-     * 3 = Linux
-     * 4 = Cros
-     * 5 = iOS
-     */
-    chromePlatform?: number;
-    /**
-     * 1 = stable
-     * 2 = beta
-     * 3 = dev
-     * 4 = canary
-     * 5 = unknown
-     */
-    chromeChannel?: number;
     chromeVersion?: string;
-    timeZone?: string;
-    debug?: boolean;
+    skipFcmRegistration?: boolean;
+    logLevel?: keyof typeof LogLevels;
     vapidKey?: string;
     heartbeatIntervalMs?: number;
-    firebase: FirebaseConfig;
+    axiosConfig?: Omit<AxiosRequestConfig, 'url' | 'method' | 'headers' | 'data' | 'responseType'>;
 }
 export interface EventChangeCredentials {
     oldCredentials?: Credentials;
@@ -138,5 +82,7 @@ export interface EventChangeCredentials {
 }
 export interface MessageToSend {
     title: string;
-    body: string;
+    message: string;
+    key?: string;
+    action?: string;
 }

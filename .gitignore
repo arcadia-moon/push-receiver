@@ -8,8 +8,6 @@ web/
 .esm-cache
 test/keys.js
 .history
-
 src/protos.d.ts
 *.tsbuildinfo
 yarn-error.log
-tests

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkIn = checkIn;
+exports.checkIn = void 0;
 const long_1 = __importDefault(require("long"));
 const crypto_1 = require("crypto");
 const request_1 = __importDefault(require("./utils/request"));
@@ -12,22 +12,40 @@ const protos_1 = __importDefault(require("./protos"));
 const logger_1 = __importDefault(require("./utils/logger"));
 const REGISTER_URL = 'https://android.clients.google.com/c2dm/register3';
 const CHECKIN_URL = 'https://android.clients.google.com/checkin';
-function parseLong(number, unsigned, radix) {
-    return long_1.default.fromString(number.toString(), unsigned, radix);
-}
 exports.default = async (config) => {
     const options = await checkIn(config);
-    const credentials = await doRegister(options, config);
-    return credentials;
+    const deleteCredentials = await doRegister(options, config, {
+        delete: "true",
+        scope: "*",
+        'X-scope': "*",
+        gmsv: 115,
+        appId: makeid(11),
+        sender: "*"
+    });
+    if (deleteCredentials.token === "com.chrome.macosx") {
+        const credentials = await doRegister(options, config, {
+            scope: "GCM",
+            "X-scope": "GCM",
+            appId: makeid(11),
+            gmsv: 115
+        });
+        return credentials;
+    }
+    else {
+        throw "DELETE CREDENTIALS ERROR";
+    }
 };
 async function checkIn(config) {
-    const body = await (await (0, request_1.default)(CHECKIN_URL, {
+    const body = await (0, request_1.default)({
+        ...config.axiosConfig,
+        url: CHECKIN_URL,
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-protobuf',
         },
-        body: prepareCheckinBuffer(config),
-    })).arrayBuffer();
+        data: prepareCheckinBuffer(config),
+        responseType: 'arraybuffer',
+    });
     const AndroidCheckinResponse = protos_1.default.checkin_proto.AndroidCheckinResponse;
     const message = AndroidCheckinResponse.decode(new Uint8Array(body));
     const object = AndroidCheckinResponse.toObject(message, {
@@ -40,32 +58,37 @@ async function checkIn(config) {
         securityToken: object.securityToken,
     };
 }
-async function doRegister({ androidId, securityToken }, config) {
-    const appId = `wp:${config.bundleId}#${(0, crypto_1.randomUUID)()}`;
+exports.checkIn = checkIn;
+async function doRegister({ androidId, securityToken }, config, _body) {
+    const subType = `wp:${config.bundleId}#${(0, crypto_1.randomUUID)()}-V2`;
     const body = (new URLSearchParams({
-        app: 'org.chromium.linux',
-        'X-subtype': appId,
+        app: 'com.chrome.macosx',
+        'X-subtype': subType,
         device: androidId,
         sender: config.vapidKey,
+        ..._body
     })).toString();
-    const response = await postRegister({ androidId, securityToken, body });
+    const response = await postRegister({ androidId, securityToken, body, axiosConfig: config.axiosConfig });
     const token = response.split('=')[1];
     return {
         token,
         androidId,
         securityToken,
-        appId,
+        appId: _body["appId"],
+        subType
     };
 }
-async function postRegister({ androidId, securityToken, body, retry = 0 }) {
-    const response = await (await (0, request_1.default)(REGISTER_URL, {
+async function postRegister({ androidId, securityToken, body, retry = 0, axiosConfig }) {
+    const response = await (0, request_1.default)({
+        ...axiosConfig,
+        url: REGISTER_URL,
         method: 'POST',
         headers: {
             Authorization: `AidLogin ${androidId}:${securityToken}`,
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body,
-    })).text();
+        data: body,
+    });
     if (response.includes('Error')) {
         logger_1.default.warn(`Register request has failed with ${response}`);
         if (retry >= 5) {
@@ -73,7 +96,7 @@ async function postRegister({ androidId, securityToken, body, retry = 0 }) {
         }
         logger_1.default.warn(`Retry... ${retry + 1}`);
         await (0, timeout_1.default)(1000);
-        return postRegister({ androidId, securityToken, body, retry: retry + 1 });
+        return postRegister({ androidId, securityToken, body, retry: retry + 1, axiosConfig });
     }
     return response;
 }
@@ -81,35 +104,18 @@ function prepareCheckinBuffer(config) {
     const gcm = config.credentials?.gcm;
     const AndroidCheckinRequest = protos_1.default.checkin_proto.AndroidCheckinRequest;
     const payload = {
-        accountCookie: [],
+        userSerialNumber: 0,
         checkin: {
-            cellOperator: '', // Optional
+            type: 3,
             chromeBuild: {
-                platform: config.chromePlatform || protos_1.default.checkin_proto.ChromeBuildProto.Platform.PLATFORM_MAC,
-                chromeVersion: config.chromeVersion || '63.0.3234.0',
-                channel: config.chromeChannel || protos_1.default.checkin_proto.ChromeBuildProto.Channel.CHANNEL_STABLE,
+                platform: 3,
+                chromeVersion: '115.0.5790.170',
+                channel: 1,
             },
-            type: protos_1.default.checkin_proto.DeviceType.DEVICE_CHROME_BROWSER,
-            lastCheckinMsec: parseLong(0n), // TODO
-            roaming: '', // Optional
-            simOperator: '', // Optional
-            userNumber: 0, // Optional
         },
-        desiredBuild: '', // Optional
-        digest: '', // Optional
-        fragment: 0,
+        version: 3,
         id: gcm?.androidId ? long_1.default.fromString(gcm.androidId) : undefined,
-        locale: '', // Optional
-        loggingId: parseLong(0n), // Optional
-        macAddr: [],
-        macAddrType: [],
-        marketCheckin: '', // Optional
-        otaCert: [],
         securityToken: gcm?.securityToken ? long_1.default.fromString(gcm?.securityToken, true) : undefined,
-        timeZone: config.timeZone || 'Europe/Prague',
-        userName: '', // Optional
-        userSerialNumber: 0, // TODO
-        version: 3, // TODO - ???
     };
     const errMsg = AndroidCheckinRequest.verify(payload);
     if (errMsg)
@@ -117,4 +123,15 @@ function prepareCheckinBuffer(config) {
     const message = AndroidCheckinRequest.create(payload);
     return AndroidCheckinRequest.encode(message).finish();
 }
+const makeid = (length) => {
+    let result = '';
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const charactersLength = characters.length;
+    let counter = 0;
+    while (counter < length) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        counter += 1;
+    }
+    return result;
+};
 //# sourceMappingURL=gcm.js.map

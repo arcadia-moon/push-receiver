@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ChromeBuildProtoChannel = exports.ChromeBuildProtoPlatform = exports.DeviceType = exports.GcmRequestStatus = exports.GcmRequestConstants = exports.MCSProtoTag = exports.Variables = exports.ProcessingState = void 0;
+exports.LogLevels = exports.GcmRequestStatus = exports.GcmRequestConstants = exports.MCSProtoTag = exports.Variables = exports.ProcessingState = void 0;
 var ProcessingState;
 (function (ProcessingState) {
     // Processing the version, tag, and size packets (assuming minimum length
@@ -14,7 +14,7 @@ var ProcessingState;
     // Processing the protocol buffer bytes (for those messages with non-zero
     // sizes).
     ProcessingState[ProcessingState["MCS_PROTO_BYTES"] = 3] = "MCS_PROTO_BYTES";
-})(ProcessingState || (exports.ProcessingState = ProcessingState = {}));
+})(ProcessingState = exports.ProcessingState || (exports.ProcessingState = {}));
 var Variables;
 (function (Variables) {
     // # of bytes a MCS version packet consumes.
@@ -31,7 +31,7 @@ var Variables;
     Variables[Variables["kSizePacketLenMax"] = 5] = "kSizePacketLenMax";
     // The current MCS protocol version.
     Variables[Variables["kMCSVersion"] = 41] = "kMCSVersion";
-})(Variables || (exports.Variables = Variables = {}));
+})(Variables = exports.Variables || (exports.Variables = {}));
 // MCS Message tags.
 // WARNING: the order of these tags must remain the same, as the tag values
 // must be consistent with those used on the server.
@@ -54,7 +54,7 @@ var MCSProtoTag;
     MCSProtoTag[MCSProtoTag["kBindAccountResponseTag"] = 14] = "kBindAccountResponseTag";
     MCSProtoTag[MCSProtoTag["kTalkMetadataTag"] = 15] = "kTalkMetadataTag";
     MCSProtoTag[MCSProtoTag["kNumProtoTypes"] = 16] = "kNumProtoTypes";
-})(MCSProtoTag || (exports.MCSProtoTag = MCSProtoTag = {}));
+})(MCSProtoTag = exports.MCSProtoTag || (exports.MCSProtoTag = {}));
 var GcmRequestConstants;
 (function (GcmRequestConstants) {
     GcmRequestConstants["kErrorPrefix"] = "Error=";
@@ -66,7 +66,7 @@ var GcmRequestConstants;
     GcmRequestConstants["kInternalServerError"] = "InternalServerError";
     GcmRequestConstants["kQuotaExceeded"] = "QUOTA_EXCEEDED";
     GcmRequestConstants["kTooManyRegistrations"] = "TOO_MANY_REGISTRATIONS";
-})(GcmRequestConstants || (exports.GcmRequestConstants = GcmRequestConstants = {}));
+})(GcmRequestConstants = exports.GcmRequestConstants || (exports.GcmRequestConstants = {}));
 // Taken from `registration_request.h` in Chromium project
 var GcmRequestStatus;
 (function (GcmRequestStatus) {
@@ -88,45 +88,11 @@ var GcmRequestStatus;
     // immediately above this line. Make sure to update the corresponding
     // histogram enum accordingly.
     GcmRequestStatus[GcmRequestStatus["STATUS_COUNT"] = 14] = "STATUS_COUNT";
-})(GcmRequestStatus || (exports.GcmRequestStatus = GcmRequestStatus = {}));
-/**
- * enum values correspond to the type of device.
- * Used in the AndroidCheckinProto and Device proto.
- */
-var DeviceType;
-(function (DeviceType) {
-    /** DEVICE_ANDROID_OS - Android Device */
-    DeviceType[DeviceType["DEVICE_ANDROID_OS"] = 1] = "DEVICE_ANDROID_OS";
-    /** DEVICE_IOS_OS - Apple IOS device */
-    DeviceType[DeviceType["DEVICE_IOS_OS"] = 2] = "DEVICE_IOS_OS";
-    /** DEVICE_CHROME_BROWSER - Chrome browser - Not Chrome OS.  No hardware records. */
-    DeviceType[DeviceType["DEVICE_CHROME_BROWSER"] = 3] = "DEVICE_CHROME_BROWSER";
-    /** DEVICE_CHROME_OS - Chrome OS */
-    DeviceType[DeviceType["DEVICE_CHROME_OS"] = 4] = "DEVICE_CHROME_OS";
-    DeviceType[DeviceType["UNRECOGNIZED"] = -1] = "UNRECOGNIZED";
-})(DeviceType || (exports.DeviceType = DeviceType = {}));
-var ChromeBuildProtoPlatform;
-(function (ChromeBuildProtoPlatform) {
-    ChromeBuildProtoPlatform[ChromeBuildProtoPlatform["PLATFORM_WIN"] = 1] = "PLATFORM_WIN";
-    ChromeBuildProtoPlatform[ChromeBuildProtoPlatform["PLATFORM_MAC"] = 2] = "PLATFORM_MAC";
-    ChromeBuildProtoPlatform[ChromeBuildProtoPlatform["PLATFORM_LINUX"] = 3] = "PLATFORM_LINUX";
-    ChromeBuildProtoPlatform[ChromeBuildProtoPlatform["PLATFORM_CROS"] = 4] = "PLATFORM_CROS";
-    ChromeBuildProtoPlatform[ChromeBuildProtoPlatform["PLATFORM_IOS"] = 5] = "PLATFORM_IOS";
-    /**
-     * PLATFORM_ANDROID - Just a placeholder. Likely don't need it due to the presence of the
-     * Android GCM on phone/tablet devices.
-     */
-    ChromeBuildProtoPlatform[ChromeBuildProtoPlatform["PLATFORM_ANDROID"] = 6] = "PLATFORM_ANDROID";
-    ChromeBuildProtoPlatform[ChromeBuildProtoPlatform["UNRECOGNIZED"] = -1] = "UNRECOGNIZED";
-})(ChromeBuildProtoPlatform || (exports.ChromeBuildProtoPlatform = ChromeBuildProtoPlatform = {}));
-var ChromeBuildProtoChannel;
-(function (ChromeBuildProtoChannel) {
-    ChromeBuildProtoChannel[ChromeBuildProtoChannel["CHANNEL_STABLE"] = 1] = "CHANNEL_STABLE";
-    ChromeBuildProtoChannel[ChromeBuildProtoChannel["CHANNEL_BETA"] = 2] = "CHANNEL_BETA";
-    ChromeBuildProtoChannel[ChromeBuildProtoChannel["CHANNEL_DEV"] = 3] = "CHANNEL_DEV";
-    ChromeBuildProtoChannel[ChromeBuildProtoChannel["CHANNEL_CANARY"] = 4] = "CHANNEL_CANARY";
-    /** CHANNEL_UNKNOWN - for tip of tree or custom builds */
-    ChromeBuildProtoChannel[ChromeBuildProtoChannel["CHANNEL_UNKNOWN"] = 5] = "CHANNEL_UNKNOWN";
-    ChromeBuildProtoChannel[ChromeBuildProtoChannel["UNRECOGNIZED"] = -1] = "UNRECOGNIZED";
-})(ChromeBuildProtoChannel || (exports.ChromeBuildProtoChannel = ChromeBuildProtoChannel = {}));
+})(GcmRequestStatus = exports.GcmRequestStatus || (exports.GcmRequestStatus = {}));
+var LogLevels;
+(function (LogLevels) {
+    LogLevels[LogLevels["NONE"] = 0] = "NONE";
+    LogLevels[LogLevels["DEBUG"] = 1] = "DEBUG";
+    LogLevels[LogLevels["VERBOSE"] = 2] = "VERBOSE";
+})(LogLevels = exports.LogLevels || (exports.LogLevels = {}));
 //# sourceMappingURL=constants.js.map

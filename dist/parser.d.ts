@@ -1,13 +1,24 @@
+/// <reference types="node" />
+/// <reference types="node" />
+import EventEmitter from 'events';
 import { TLSSocket } from 'tls';
-import Emitter from './emitter';
-import type { DataPacket } from './types';
-interface ParserEvents {
-    error: (err: Error) => void;
-    message: (data: DataPacket) => void;
-}
-export default class Parser extends Emitter<ParserEvents> {
-    #private;
+export default class Parser extends EventEmitter {
+    private socket;
+    private state;
+    private data;
+    private messageTag;
+    private messageSize;
+    private handshakeComplete;
+    private isWaitingForData;
     constructor(socket: TLSSocket);
     destroy(): void;
+    private emitError;
+    private handleData;
+    private waitForData;
+    private handleGotVersion;
+    private handleGotMessageTag;
+    private handleGotMessageSize;
+    private handleGotMessageBytes;
+    private getNextMessage;
+    private buildProtobufFromTag;
 }
-export {};

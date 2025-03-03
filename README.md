@@ -2,6 +2,10 @@
 
 A library to subscribe to GCM/FCM and receive notifications within a node process.
 
+For [Electron](https://github.com/electron/electron), you can use [electron-push-receiver](https://github.com/MatthieuLemoine/electron-push-receiver) instead which provides a convenient wrapper.
+
+See [this blog post](https://medium.com/@MatthieuLemoine/my-journey-to-bring-web-push-support-to-node-and-electron-ce70eea1c0b0) for more details.
+
 ## When should I use `push-receiver` ?
 
 - I want to **receive** push notifications sent using Firebase Cloud Messaging in an [electron](https://github.com/electron/electron) desktop application.
@@ -18,13 +22,12 @@ A library to subscribe to GCM/FCM and receive notifications within a node proces
 npm i -S @eneris/push-receiver
 `
 
-## Requirements 
+## Requirements
 
-- Node v20 (async/await/randomUUID/fetch support)
-- Firebase credentials from `Step 1` - https://firebase.google.com/docs/web/setup
+- Node v16 (async/await/randomUUID support)
+- Firebase sender id to receive notification
+- Firebase serverKey to send notification (optional)
 
-## Acknowledgements 
-- https://github.com/MatthieuLemoine - for creating initial module on wich uppon in iterated
 
 ## Usage
 
@@ -34,12 +37,14 @@ npm i -S @eneris/push-receiver
 interface ClientConfig {
     credentials?: Credentials // Will be generated if missing - save this after first use!
     persistentIds?: PersistentId[] // Default - []
+    senderId: string // Required
     bundleId?: string // Default - 'receiver.push.com'
     chromeId?: string // Default - 'org.chromium.linux'
     chromeVersion?: string // Default - '94.0.4606.51'
-    debug?: boolean // Enables debug console logs
+    skipFcmRegistration?: boolean // Default - false
+    logLevel?: keyof typeof LogLevels // 'NONE'|'DEBUG'|'VERBOSE' - default: 'NONE'
+    vapidKey?: string // Default - default firebase VAPID key
     heartbeatIntervalMs?: number // Default - 5 * 60 * 1000
-    firebase: FirebaseConfig // Full client firebase credentials are now needed
 }
 ```
 
@@ -47,15 +52,18 @@ interface ClientConfig {
 
 ```javascript
 import { PushReceiver } from '@eneris/push-receiver'
+import { argv as parsedArgs } from 'yargs'
+
+if (!parsedArgs.senderId) {
+    console.error('Missing senderId')
+    return
+}
 
 (async () => {
     const instance = new PushReceiver({
-        debug: true,
+        logLevel: parsedArgs.logLevel || 'DEBUG',
+        senderId: parsedArgs.senderId,
         persistentIds: [], // Recover stored ids of all previous notifications
-        firebase: {
-            // ...Firebase web credentials
-        },
-        credentials: null, // Insert credentials here after the first run
     })
 
     const stopListeningToCredentials = instance.onCredentialsChanged(({ oldCredentials, newCredentials }) => {
@@ -70,24 +78,12 @@ import { PushReceiver } from '@eneris/push-receiver'
 
     await instance.connect()
 
-    
-    await instance.connect()
-
-    console.log('connected')
-
-    const sender = new PushSender({
-        // Firebase service account credentials here
-    })
-
-    console.log('server created')
-
-    await sender.testMessage(instance.config.credentials.fcm.token)
-
-    console.log('message sent')
+    if (parsedArgs.serverId) {
+        await instance.testMessage(parsedArgs.serverId)
+    }
 
     stopListeningToCredentials()
     stopListeningToNotifications()
-
     instance.destroy()
 })()
 ```

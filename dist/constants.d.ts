@@ -42,65 +42,24 @@ export declare enum GcmRequestConstants {
     kTooManyRegistrations = "TOO_MANY_REGISTRATIONS"
 }
 export declare enum GcmRequestStatus {
-    SUCCESS = 0,// Registration completed successfully.
-    INVALID_PARAMETERS = 1,// One of request paramteres was invalid.
-    INVALID_SENDER = 2,// One of the provided senders was invalid.
-    AUTHENTICATION_FAILED = 3,// Authentication failed.
-    DEVICE_REGISTRATION_ERROR = 4,// Chrome is not properly registered.
-    UNKNOWN_ERROR = 5,// Unknown error.
-    URL_FETCHING_FAILED = 6,// URL fetching failed.
-    HTTP_NOT_OK = 7,// HTTP status was not OK.
-    NO_RESPONSE_BODY = 8,// No response body.
-    REACHED_MAX_RETRIES = 9,// Reached maximum number of retries.
-    RESPONSE_PARSING_FAILED = 10,// Registration response parsing failed.
-    INTERNAL_SERVER_ERROR = 11,// Internal server error during request.
-    QUOTA_EXCEEDED = 12,// Registration quota exceeded.
-    TOO_MANY_REGISTRATIONS = 13,// Max registrations per device exceeded.
+    SUCCESS = 0,
+    INVALID_PARAMETERS = 1,
+    INVALID_SENDER = 2,
+    AUTHENTICATION_FAILED = 3,
+    DEVICE_REGISTRATION_ERROR = 4,
+    UNKNOWN_ERROR = 5,
+    URL_FETCHING_FAILED = 6,
+    HTTP_NOT_OK = 7,
+    NO_RESPONSE_BODY = 8,
+    REACHED_MAX_RETRIES = 9,
+    RESPONSE_PARSING_FAILED = 10,
+    INTERNAL_SERVER_ERROR = 11,
+    QUOTA_EXCEEDED = 12,
+    TOO_MANY_REGISTRATIONS = 13,
     STATUS_COUNT = 14
 }
-/**
- * enum values correspond to the type of device.
- * Used in the AndroidCheckinProto and Device proto.
- */
-export declare enum DeviceType {
-    /** DEVICE_ANDROID_OS - Android Device */
-    DEVICE_ANDROID_OS = 1,
-    /** DEVICE_IOS_OS - Apple IOS device */
-    DEVICE_IOS_OS = 2,
-    /** DEVICE_CHROME_BROWSER - Chrome browser - Not Chrome OS.  No hardware records. */
-    DEVICE_CHROME_BROWSER = 3,
-    /** DEVICE_CHROME_OS - Chrome OS */
-    DEVICE_CHROME_OS = 4,
-    UNRECOGNIZED = -1
-}
-/** Build characteristics unique to the Chrome browser, and Chrome OS */
-export interface ChromeBuildProto {
-    /** The platform of the device. */
-    platform: ChromeBuildProtoPlatform;
-    /** The Chrome instance's version. */
-    chrome_version: string;
-    /** The Channel (build type) of Chrome. */
-    channel: ChromeBuildProtoChannel;
-}
-export declare enum ChromeBuildProtoPlatform {
-    PLATFORM_WIN = 1,
-    PLATFORM_MAC = 2,
-    PLATFORM_LINUX = 3,
-    PLATFORM_CROS = 4,
-    PLATFORM_IOS = 5,
-    /**
-     * PLATFORM_ANDROID - Just a placeholder. Likely don't need it due to the presence of the
-     * Android GCM on phone/tablet devices.
-     */
-    PLATFORM_ANDROID = 6,
-    UNRECOGNIZED = -1
-}
-export declare enum ChromeBuildProtoChannel {
-    CHANNEL_STABLE = 1,
-    CHANNEL_BETA = 2,
-    CHANNEL_DEV = 3,
-    CHANNEL_CANARY = 4,
-    /** CHANNEL_UNKNOWN - for tip of tree or custom builds */
-    CHANNEL_UNKNOWN = 5,
-    UNRECOGNIZED = -1
+export declare enum LogLevels {
+    NONE = 0,
+    DEBUG = 1,
+    VERBOSE = 2
 }
