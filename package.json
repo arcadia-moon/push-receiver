@@ -1,5 +1,5 @@
 {
-    "name": "@eneris/push-receiver",
+    "name": "@arcadia-moon/push-receiver",
     "version": "4.3.0",
     "description": "A module to subscribe to GCM/FCM and receive notifications within a node process.",
     "main": "dist/index.js",
@@ -10,19 +10,19 @@
         "*.md"
     ],
     "scripts": {
-        "protos:convert": "yarn pbjs -t static-module --force-long --wrap commonjs -o ./src/protos.js ./src/protos/*.proto",
-        "protos": "yarn pbts -o ./src/protos.d.ts ./src/protos.js",
-        "protos:build": "yarn protos:convert && yarn protos",
+        "protos:convert": "npx pbjs -t static-module --force-long --wrap commonjs -o ./src/protos.js ./src/protos/*.proto",
+        "protos": "npx pbts -o ./src/protos.d.ts ./src/protos.js",
+        "protos:build": "npm run protos:convert && npm run protos",
         "protos:copy": "cp ./src/protos.* ./dist/",
-        "build": "yarn protos:build && yarn tsc && yarn protos:copy",
-        "prepublish": "yarn build",
-        "lint": "yarn eslint src --ext .ts",
-        "precommit": "yarn lint && yarn build",
-        "prepare": "yarn prepublish"
+        "build": "npm run protos:build && npx tsc && npm run protos:copy",
+        "prepublish": "npm run build",
+        "lint": "npx eslint src --ext .ts",
+        "precommit": "npm run lint && npm run build",
+        "prepare": "npm run prepublish"
     },
     "repository": {
         "type": "git",
-        "url": "git+ssh://git@github.com/eneris/push-receiver.git"
+        "url": "git+ssh://git@github.com/arcadia-moon/push-receiver.git"
     },
     "keywords": [
         "push",
@@ -37,9 +37,9 @@
     "author": "Eneris & MatthieuLemoine",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/eneris/push-receiver/issues"
+        "url": "https://github.com/arcadia-moon/push-receiver/issues"
     },
-    "homepage": "https://github.com/eneris/push-receiver#readme",
+    "homepage": "https://github.com/arcadia-moon/push-receiver#readme",
     "devDependencies": {
         "@types/node": "^22.8.2",
         "@typescript-eslint/eslint-plugin": "^8.12.1",
