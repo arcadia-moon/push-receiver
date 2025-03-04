@@ -204,7 +204,9 @@ class PushReceiver extends events_1.EventEmitter {
         }
         const buffer = HeartbeatPingRequestType.encodeDelimited(heartbeatPingRequest).finish();
         logger_1.default.verbose('HEARTBEAT sending PING', heartbeatPingRequest);
+        // @ts-ignore - Node.js의 Buffer는 TLSSocket.write와 호환됩니다
         this.socket.write(Buffer.concat([
+            // @ts-ignore - Node.js의 Buffer는 Uint8Array와 호환됩니다
             Buffer.from([constants_1.MCSProtoTag.kHeartbeatPingTag]),
             buffer,
         ]));
@@ -214,7 +216,7 @@ class PushReceiver extends events_1.EventEmitter {
         if (this.newStreamIdAvailable()) {
             heartbeatAckRequest.last_stream_id_received = this.getStreamId();
         }
-        if (object?.status) {
+        if (object && typeof object === 'object' && 'status' in object) {
             heartbeatAckRequest.status = object.status;
         }
         logger_1.default.verbose('Heartbeat send pong', heartbeatAckRequest);
@@ -225,7 +227,9 @@ class PushReceiver extends events_1.EventEmitter {
         }
         const buffer = HeartbeatAckRequestType.encodeDelimited(heartbeatAckRequest).finish();
         logger_1.default.verbose('HEARTBEAT sending PONG', heartbeatAckRequest);
+        // @ts-ignore - Node.js의 Buffer는 TLSSocket.write와 호환됩니다
         this.socket.write(Buffer.concat([
+            // @ts-ignore - Node.js의 Buffer는 Uint8Array와 호환됩니다
             Buffer.from([constants_1.MCSProtoTag.kHeartbeatAckTag]),
             buffer
         ]));
@@ -262,7 +266,9 @@ class PushReceiver extends events_1.EventEmitter {
             throw new Error(errorMessage);
         }
         const buffer = LoginRequestType.encodeDelimited(loginRequest).finish();
+        // @ts-ignore - Node.js의 Buffer는 TLSSocket.write와 호환됩니다
         this.socket.write(Buffer.concat([
+            // @ts-ignore - Node.js의 Buffer는 Uint8Array와 호환됩니다
             Buffer.from([constants_1.Variables.kMCSVersion, constants_1.MCSProtoTag.kLoginRequestTag]),
             buffer,
         ]));
@@ -308,7 +314,7 @@ class PushReceiver extends events_1.EventEmitter {
         this.streamId++;
     };
     handleDataMessage = (object) => {
-        if (this.persistentIds.includes(object.persistentId)) {
+        if (!object || this.persistentIds.includes(object.persistentId)) {
             return;
         }
         let message;
@@ -358,7 +364,7 @@ class PushReceiver extends events_1.EventEmitter {
         }).then(({ data }) => {
             if (data.failure) {
                 logger_1.default.debug('Message test failed');
-                throw new Error(data);
+                throw new Error(JSON.stringify(data));
             }
             logger_1.default.debug('Message test passed');
         });

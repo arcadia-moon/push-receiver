@@ -110,6 +110,8 @@ class Parser extends events_1.default {
     }
     handleGotMessageSize() {
         let incompleteSizePacket = false;
+        // ProtobufJS의 BufferReader는 Node.js의 Buffer와 호환됩니다
+        // @ts-ignore - Buffer와 Uint8Array 간의 타입 호환성 문제 해결
         const reader = new protobufjs_1.default.BufferReader(this.data);
         try {
             this.messageSize = reader.int32();
@@ -163,6 +165,8 @@ class Parser extends events_1.default {
             return;
         }
         const buffer = this.data.slice(0, this.messageSize);
+        // ProtobufJS의 decode 메서드는 Node.js의 Buffer와 호환됩니다
+        // @ts-ignore - Buffer와 Uint8Array 간의 타입 호환성 문제 해결
         const message = protobuf.decode(buffer);
         this.data = this.data.slice(this.messageSize);
         const object = protobuf.toObject(message, {

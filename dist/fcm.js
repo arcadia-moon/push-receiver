@@ -11,6 +11,9 @@ const FCM_ENDPOINT = 'https://fcm.googleapis.com/fcm/send';
 async function registerFCM(gcm, config) {
     const keys = await createKeys();
     if (!config.skipFcmRegistration) {
+        // URL 안전한 base64 문자열로 변환
+        const publicKey = (0, base64_1.escape)(keys.publicKey);
+        const authSecret = (0, base64_1.escape)(keys.authSecret);
         const response = await (0, request_1.default)({
             ...config.axiosConfig,
             url: FCM_SUBSCRIBE,
@@ -21,14 +24,8 @@ async function registerFCM(gcm, config) {
             data: (new URLSearchParams({
                 authorized_entity: config.senderId,
                 endpoint: `${FCM_ENDPOINT}/${gcm.token}`,
-                encryption_key: keys.publicKey
-                    .replace(/=/g, '')
-                    .replace(/\+/g, '-')
-                    .replace(/\//g, '_'),
-                encryption_auth: keys.authSecret
-                    .replace(/=/g, '')
-                    .replace(/\+/g, '-')
-                    .replace(/\//g, '_'),
+                encryption_key: publicKey,
+                encryption_auth: authSecret,
             })).toString(),
         });
         return {
@@ -41,7 +38,10 @@ async function registerFCM(gcm, config) {
         return {
             gcm,
             keys,
-            fcm: null,
+            fcm: {
+                token: '',
+                pushSet: ''
+            },
         };
     }
 }
