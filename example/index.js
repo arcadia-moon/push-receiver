@@ -12,6 +12,8 @@ if (!parsedArgs.senderId) {
 const main = async () => {
     const instance = new PushReceiver({
         logLevel: parsedArgs.logLevel || 'DEBUG',
+        deviceType: parsedArgs.deviceType || 'chrome',
+        appId: parsedArgs.appId,
         senderId: parsedArgs.senderId,
         persistentIds: [], // Recover stored ids of all previous notifications
     })
@@ -33,4 +35,7 @@ const main = async () => {
 }
 
 main()
+
+// 사용 예시:
+// node example/index.js --senderId=YOUR_SENDER_ID --deviceType=android --appId=com.custom.app
 

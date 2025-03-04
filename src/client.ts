@@ -244,20 +244,22 @@ export default class PushReceiver extends EventEmitter {
 
         Logger.verbose('HEARTBEAT sending PING', heartbeatPingRequest)
 
+        // @ts-ignore - Node.js의 Buffer는 TLSSocket.write와 호환됩니다
         this.socket.write(Buffer.concat([
+            // @ts-ignore - Node.js의 Buffer는 Uint8Array와 호환됩니다
             Buffer.from([MCSProtoTag.kHeartbeatPingTag]),
             buffer,
         ]))
     }
 
-    private sendHeartbeatPong(object) {
-        const heartbeatAckRequest: Record<string, any> = {}
+    private sendHeartbeatPong(object: unknown) {
+        const heartbeatAckRequest: Record<string, unknown> = {}
 
         if (this.newStreamIdAvailable()) {
             heartbeatAckRequest.last_stream_id_received = this.getStreamId()
         }
 
-        if (object?.status) {
+        if (object && typeof object === 'object' && 'status' in object) {
             heartbeatAckRequest.status = object.status
         }
 
@@ -273,7 +275,9 @@ export default class PushReceiver extends EventEmitter {
 
         Logger.verbose('HEARTBEAT sending PONG', heartbeatAckRequest)
 
+        // @ts-ignore - Node.js의 Buffer는 TLSSocket.write와 호환됩니다
         this.socket.write(Buffer.concat([
+            // @ts-ignore - Node.js의 Buffer는 Uint8Array와 호환됩니다
             Buffer.from([MCSProtoTag.kHeartbeatAckTag]),
             buffer
         ]))
@@ -315,7 +319,9 @@ export default class PushReceiver extends EventEmitter {
 
         const buffer = LoginRequestType.encodeDelimited(loginRequest).finish()
 
+        // @ts-ignore - Node.js의 Buffer는 TLSSocket.write와 호환됩니다
         this.socket.write(Buffer.concat([
+            // @ts-ignore - Node.js의 Buffer는 Uint8Array와 호환됩니다
             Buffer.from([Variables.kMCSVersion, MCSProtoTag.kLoginRequestTag]),
             buffer,
         ]))
@@ -372,8 +378,8 @@ export default class PushReceiver extends EventEmitter {
         this.streamId++
     }
 
-    private handleDataMessage = (object): void => {
-        if (this.persistentIds.includes(object.persistentId)) {
+    private handleDataMessage = (object: any): void => {
+        if (!object || this.persistentIds.includes(object.persistentId)) {
             return
         }
 
@@ -405,7 +411,7 @@ export default class PushReceiver extends EventEmitter {
         })
     }
 
-    private handleParserError = (error) => {
+    private handleParserError = (error: Error): void => {
         Logger.error(error)
         this.socketRetry()
     }
@@ -427,7 +433,7 @@ export default class PushReceiver extends EventEmitter {
         }).then(({ data }) => {
             if (data.failure) {
                 Logger.debug('Message test failed')
-                throw new Error(data)
+                throw new Error(JSON.stringify(data))
             }
 
             Logger.debug('Message test passed')

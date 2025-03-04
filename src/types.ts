@@ -83,6 +83,8 @@ export interface DataPacket<T = any> {
 export interface ClientConfig {
     credentials?: Credentials
     persistentIds?: PersistentId[]
+    appId?: string
+    deviceType?: 'chrome' | 'android' | 'ios' | 'chrome_os'
     senderId: string
     bundleId?: string
     chromeId?: string

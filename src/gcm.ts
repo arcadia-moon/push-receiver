@@ -10,27 +10,57 @@ import type * as Types from './types'
 const REGISTER_URL = 'https://android.clients.google.com/c2dm/register3'
 const CHECKIN_URL = 'https://android.clients.google.com/checkin'
 
+// 디바이스 타입에 따른 앱 ID 매핑
+const APP_IDS = {
+    chrome: 'com.chrome.macosx',
+    android: 'com.google.android.gms',
+    ios: 'com.google.ios.youtube',
+    chrome_os: 'com.chrome.os'
+}
+
+// 디바이스 타입에 따른 플랫폼 매핑 (ChromeBuildProto.Platform)
+const PLATFORMS = {
+    chrome: 2, // PLATFORM_MAC
+    android: 6, // PLATFORM_ANDROID
+    ios: 5, // PLATFORM_IOS
+    chrome_os: 4 // PLATFORM_CROS
+}
+
+// 디바이스 타입에 따른 디바이스 타입 매핑 (DeviceType)
+const DEVICE_TYPES = {
+    chrome: 3, // DEVICE_CHROME_BROWSER
+    android: 1, // DEVICE_ANDROID_OS
+    ios: 2, // DEVICE_IOS_OS
+    chrome_os: 4 // DEVICE_CHROME_OS
+}
+
 export default async (config: Types.ClientConfig): Promise<Types.GcmData> => {
     const options = await checkIn(config)
+    const deviceType = config.deviceType || 'chrome'
+    const appId = config.appId || APP_IDS[deviceType]
+    
     const deleteCredentials = await doRegister(options, config, {
         delete: "true",
         scope: "*",
         'X-scope': "*",
         gmsv: 115,
         appId: makeid(11),
-        sender: "*"
+        sender: "*",
+        deviceType
     })
-    if(deleteCredentials.token === "com.chrome.macosx") {
+    
+    if(deleteCredentials.token === appId) {
         const credentials = await doRegister(options, config, {
             scope: "GCM",
             "X-scope": "GCM",
             appId: makeid(11),
-            gmsv: 115
+            gmsv: 115,
+            deviceType
         });
         return credentials;
     }
     else {
-        throw "DELETE CREDENTIALS ERROR"
+        throw `DELETE CREDENTIALS ERROR: Expected token ${appId}, got ${deleteCredentials.token}`
     }
 }
 
@@ -62,8 +92,11 @@ export async function checkIn(config: Types.ClientConfig): Promise<Types.GcmData
 
 async function doRegister({ androidId, securityToken }: Types.GcmData, config: Types.ClientConfig, _body: any): Promise<Types.GcmData> {
     const subType = `wp:${config.bundleId}#${randomUUID()}-V2`
+    const deviceType = _body.deviceType || config.deviceType || 'chrome'
+    const appId = config.appId || APP_IDS[deviceType]
+
     const body = (new URLSearchParams({
-        app: 'com.chrome.macosx',
+        app: appId,
         'X-subtype': subType,
         device: androidId,
         sender: config.vapidKey,
@@ -117,14 +150,18 @@ async function postRegister({ androidId, securityToken, body, retry = 0, axiosCo
 
 function prepareCheckinBuffer(config: Types.ClientConfig) {
     const gcm = config.credentials?.gcm
+    const deviceType = config.deviceType || 'chrome'
+    const platform = PLATFORMS[deviceType]
+    const type = DEVICE_TYPES[deviceType]
+    
     const AndroidCheckinRequest = Protos.checkin_proto.AndroidCheckinRequest
 
     const payload = {
         userSerialNumber: 0,
         checkin: {
-            type: 3,
+            type: type,
             chromeBuild: {
-                platform: 3,
+                platform: platform,
                 chromeVersion: '115.0.5790.170',
                 channel: 1,
             },

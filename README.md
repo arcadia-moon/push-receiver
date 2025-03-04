@@ -37,6 +37,8 @@ npm i -S @eneris/push-receiver
 interface ClientConfig {
     credentials?: Credentials // Will be generated if missing - save this after first use!
     persistentIds?: PersistentId[] // Default - []
+    deviceType?: 'chrome' | 'android' | 'ios' | 'chrome_os' // Default - 'chrome'
+    appId?: string // Custom app ID, overrides default based on deviceType
     senderId: string // Required
     bundleId?: string // Default - 'receiver.push.com'
     chromeId?: string // Default - 'org.chromium.linux'
@@ -62,6 +64,8 @@ if (!parsedArgs.senderId) {
 (async () => {
     const instance = new PushReceiver({
         logLevel: parsedArgs.logLevel || 'DEBUG',
+        deviceType: parsedArgs.deviceType || 'chrome', // 'chrome', 'android', 'ios', 'chrome_os'
+        appId: parsedArgs.appId, // 사용자 지정 앱 ID (선택 사항)
         senderId: parsedArgs.senderId,
         persistentIds: [], // Recover stored ids of all previous notifications
     })
@@ -86,4 +90,7 @@ if (!parsedArgs.senderId) {
     stopListeningToNotifications()
     instance.destroy()
 })()
+
+// 사용 예시:
+// node example.js --senderId=YOUR_SENDER_ID --deviceType=android --appId=com.custom.app
 ```

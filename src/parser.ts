@@ -29,115 +29,117 @@ export default class Parser extends EventEmitter {
     private isWaitingForData = true
 
     constructor(socket: TLSSocket) {
-        super()
+        super();
 
-        this.socket = socket
-        this.socket.on('data', this.handleData)
+        this.socket = socket;
+        this.socket.on('data', this.handleData);
     }
 
     public destroy(): void {
-        this.isWaitingForData = false
-        this.socket.removeListener('data', this.handleData)
+        this.isWaitingForData = false;
+        this.socket.removeListener('data', this.handleData);
     }
 
-    private emitError(error): void {
-        this.destroy()
-        this.emit('error', error)
+    private emitError(error: Error): void {
+        this.destroy();
+        this.emit('error', error);
     }
 
-    private handleData = (buffer) => {
-        Logger.verbose(`Got data: ${buffer.length}`)
-        this.data = Buffer.concat([this.data, buffer])
+    private handleData = (buffer: Buffer): void => {
+        Logger.verbose(`Got data: ${buffer.length}`);
+        this.data = Buffer.concat([this.data, buffer]);
         if (this.isWaitingForData) {
-            this.isWaitingForData = false
-            this.waitForData()
+            this.isWaitingForData = false;
+            this.waitForData();
         }
     }
 
-    private waitForData() {
-        Logger.verbose(`waitForData state: ${this.state}`)
+    private waitForData(): void {
+        Logger.verbose(`waitForData state: ${this.state}`);
 
-        let minBytesNeeded = 0
+        let minBytesNeeded = 0;
 
         switch (this.state) {
             case ProcessingState.MCS_VERSION_TAG_AND_SIZE:
-                minBytesNeeded = Variables.kVersionPacketLen + Variables.kTagPacketLen + Variables.kSizePacketLenMin
-                break
+                minBytesNeeded = Variables.kVersionPacketLen + Variables.kTagPacketLen + Variables.kSizePacketLenMin;
+                break;
             case ProcessingState.MCS_TAG_AND_SIZE:
-                minBytesNeeded = Variables.kTagPacketLen + Variables.kSizePacketLenMin
-                break
+                minBytesNeeded = Variables.kTagPacketLen + Variables.kSizePacketLenMin;
+                break;
             case ProcessingState.MCS_SIZE:
-                break
+                break;
             case ProcessingState.MCS_PROTO_BYTES:
-                minBytesNeeded = this.messageSize
-                break
+                minBytesNeeded = this.messageSize;
+                break;
             default:
-                this.emitError(new Error(`Unexpected state: ${this.state}`))
-                return
+                this.emitError(new Error(`Unexpected state: ${this.state}`));
+                return;
         }
 
         if (this.data.length < minBytesNeeded) {
             // TODO(ibash) set a timeout and check for socket disconnect
-            Logger.verbose(`Socket read finished prematurely. Waiting for ${minBytesNeeded - this.data.length} more bytes`)
-            this.isWaitingForData = true
-            return
+            Logger.verbose(`Socket read finished prematurely. Waiting for ${minBytesNeeded - this.data.length} more bytes`);
+            this.isWaitingForData = true;
+            return;
         }
 
-        Logger.verbose(`Processing MCS data: state == ${this.state}`)
+        Logger.verbose(`Processing MCS data: state == ${this.state}`);
 
         switch (this.state) {
             case ProcessingState.MCS_VERSION_TAG_AND_SIZE:
-                this.handleGotVersion()
-                break
+                this.handleGotVersion();
+                break;
             case ProcessingState.MCS_TAG_AND_SIZE:
-                this.handleGotMessageTag()
-                break
+                this.handleGotMessageTag();
+                break;
             case ProcessingState.MCS_SIZE:
-                this.handleGotMessageSize()
-                break
+                this.handleGotMessageSize();
+                break;
             case ProcessingState.MCS_PROTO_BYTES:
-                this.handleGotMessageBytes()
-                break
+                this.handleGotMessageBytes();
+                break;
             default:
-                this.emitError(new Error(`Unexpected state: ${this.state}`))
-                return
+                this.emitError(new Error(`Unexpected state: ${this.state}`));
+                return;
         }
     }
 
-    private handleGotVersion() {
-        const version = this.data.readInt8(0)
-        this.data = this.data.slice(1)
-        Logger.verbose(`VERSION IS ${version}`)
+    private handleGotVersion(): void {
+        const version = this.data.readInt8(0);
+        this.data = this.data.slice(1);
+        Logger.verbose(`VERSION IS ${version}`);
 
         if (version < Variables.kMCSVersion && version !== 38) {
-            this.emitError(new Error(`Got wrong version: ${version}`))
-            return
+            this.emitError(new Error(`Got wrong version: ${version}`));
+            return;
         }
 
         // Process the LoginResponse message tag.
-        this.handleGotMessageTag()
+        this.handleGotMessageTag();
     }
 
-    private handleGotMessageTag() {
-        this.messageTag = this.data.readInt8(0)
-        this.data = this.data.slice(1)
-        Logger.verbose(`RECEIVED PROTO OF TYPE ${this.messageTag}`)
+    private handleGotMessageTag(): void {
+        this.messageTag = this.data.readInt8(0);
+        this.data = this.data.slice(1);
+        Logger.verbose(`RECEIVED PROTO OF TYPE ${this.messageTag}`);
 
-        this.handleGotMessageSize()
+        this.handleGotMessageSize();
     }
 
-    private handleGotMessageSize() {
-        let incompleteSizePacket = false
-        const reader = new ProtobufJS.BufferReader(this.data)
+    private handleGotMessageSize(): void {
+        let incompleteSizePacket = false;
+        // ProtobufJS의 BufferReader는 Node.js의 Buffer와 호환됩니다
+        // @ts-ignore - Buffer와 Uint8Array 간의 타입 호환성 문제 해결
+        const reader = new ProtobufJS.BufferReader(this.data);
 
         try {
-            this.messageSize = reader.int32()
+            this.messageSize = reader.int32();
         } catch (error) {
             if (error.message.startsWith('index out of range:')) {
-                incompleteSizePacket = true
+                incompleteSizePacket = true;
             } else {
-                this.emitError(error)
-                return
+                this.emitError(error);
+                return;
             }
         }
 
@@ -146,90 +148,92 @@ export default class Parser extends EventEmitter {
         // NOTE(ibash) I could only test this case by manually cutting the buffer
         // above to be mid-packet like: new ProtobufJS.BufferReader(this.data.slice(0, 1))
         if (incompleteSizePacket) {
-            this.state = ProcessingState.MCS_SIZE
-            this.waitForData()
-            return
+            this.state = ProcessingState.MCS_SIZE;
+            this.waitForData();
+            return;
         }
 
-        this.data = this.data.slice(reader.pos)
+        this.data = this.data.slice(reader.pos);
 
-        Logger.verbose(`Proto size: ${this.messageSize}`)
+        Logger.verbose(`Proto size: ${this.messageSize}`);
 
         if (this.messageSize > 0) {
-            this.state = ProcessingState.MCS_PROTO_BYTES
-            this.waitForData()
+            this.state = ProcessingState.MCS_PROTO_BYTES;
+            this.waitForData();
         } else {
-            this.handleGotMessageBytes()
+            this.handleGotMessageBytes();
         }
     }
 
-    private handleGotMessageBytes() {
-        const protobuf = this.buildProtobufFromTag(this.messageTag)
+    private handleGotMessageBytes(): void {
+        const protobuf = this.buildProtobufFromTag(this.messageTag);
         if (!protobuf) {
-            this.emitError(new Error('Unknown tag'))
-            return
+            this.emitError(new Error('Unknown tag'));
+            return;
         }
 
         // Messages with no content are valid just use the default protobuf for
         // that tag.
         if (this.messageSize === 0) {
-            this.emit('message', { tag: this.messageTag, object: {} })
-            this.getNextMessage()
-            return
+            this.emit('message', { tag: this.messageTag, object: {} });
+            this.getNextMessage();
+            return;
         }
 
         if (this.data.length < this.messageSize) {
             // Continue reading data.
-            Logger.verbose(`Continuing data read. Buffer size is ${this.data.length}, expecting ${this.messageSize}`)
-            this.state = ProcessingState.MCS_PROTO_BYTES
-            this.waitForData()
-            return
+            Logger.verbose(`Continuing data read. Buffer size is ${this.data.length}, expecting ${this.messageSize}`);
+            this.state = ProcessingState.MCS_PROTO_BYTES;
+            this.waitForData();
+            return;
         }
 
-        const buffer = this.data.slice(0, this.messageSize)
-        const message = protobuf.decode(buffer)
+        const buffer = this.data.slice(0, this.messageSize);
+        // ProtobufJS의 decode 메서드는 Node.js의 Buffer와 호환됩니다
+        // @ts-ignore - Buffer와 Uint8Array 간의 타입 호환성 문제 해결
+        const message = protobuf.decode(buffer);
 
-        this.data = this.data.slice(this.messageSize)
+        this.data = this.data.slice(this.messageSize);
 
         const object = protobuf.toObject(message, {
             longs: String,
             enums: String,
             bytes: Buffer,
-        })
+        });
 
-        this.emit('message', { tag: this.messageTag, object: object })
+        this.emit('message', { tag: this.messageTag, object: object });
 
         if (this.messageTag === MCSProtoTag.kLoginResponseTag) {
             if (this.handshakeComplete) {
-                Logger.error('Unexpected login response')
+                Logger.error('Unexpected login response');
             } else {
-                this.handshakeComplete = true
-                Logger.verbose('GCM Handshake complete.')
+                this.handshakeComplete = true;
+                Logger.verbose('GCM Handshake complete.');
             }
         }
 
-        this.getNextMessage()
+        this.getNextMessage();
     }
 
-    private getNextMessage() {
-        this.messageTag = 0
-        this.messageSize = 0
-        this.state = ProcessingState.MCS_TAG_AND_SIZE
-        this.waitForData()
+    private getNextMessage(): void {
+        this.messageTag = 0;
+        this.messageSize = 0;
+        this.state = ProcessingState.MCS_TAG_AND_SIZE;
+        this.waitForData();
     }
 
-    private buildProtobufFromTag(tag) {
+    private buildProtobufFromTag(tag: number): any {
         switch (tag) {
-            case MCSProtoTag.kHeartbeatPingTag: return Protos.mcs_proto.HeartbeatPing
-            case MCSProtoTag.kHeartbeatAckTag: return Protos.mcs_proto.HeartbeatAck
-            case MCSProtoTag.kLoginRequestTag: return Protos.mcs_proto.LoginRequest
-            case MCSProtoTag.kLoginResponseTag: return Protos.mcs_proto.LoginResponse
-            case MCSProtoTag.kCloseTag: return Protos.mcs_proto.Close
-            case MCSProtoTag.kIqStanzaTag: return Protos.mcs_proto.IqStanza
-            case MCSProtoTag.kDataMessageStanzaTag: return Protos.mcs_proto.DataMessageStanza
-            case MCSProtoTag.kStreamErrorStanzaTag: return Protos.mcs_proto.StreamErrorStanza
+            case MCSProtoTag.kHeartbeatPingTag: return Protos.mcs_proto.HeartbeatPing;
+            case MCSProtoTag.kHeartbeatAckTag: return Protos.mcs_proto.HeartbeatAck;
+            case MCSProtoTag.kLoginRequestTag: return Protos.mcs_proto.LoginRequest;
+            case MCSProtoTag.kLoginResponseTag: return Protos.mcs_proto.LoginResponse;
+            case MCSProtoTag.kCloseTag: return Protos.mcs_proto.Close;
+            case MCSProtoTag.kIqStanzaTag: return Protos.mcs_proto.IqStanza;
+            case MCSProtoTag.kDataMessageStanzaTag: return Protos.mcs_proto.DataMessageStanza;
+            case MCSProtoTag.kStreamErrorStanzaTag: return Protos.mcs_proto.StreamErrorStanza;
             default:
-                return null
+                return null;
         }
     }
 }
